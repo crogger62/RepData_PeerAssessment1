@@ -10,8 +10,11 @@ output:
 
 ## Loading and preprocessing the data
 
-
-
+```r
+library(dplyr)
+library(xtable)
+step<-read.csv("activity.csv")
+```
 
 ## What is mean total number of steps taken per day?
 
@@ -31,7 +34,7 @@ print(dt,type="html")
 ```
 
 <!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
-<!-- Mon Jun 08 19:21:10 2015 -->
+<!-- Mon Jun 08 20:59:28 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> date </th> <th> StepSum </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> 2012-10-01 </td> <td align="right">   0 </td> </tr>
@@ -114,10 +117,32 @@ The mean total number of steps taken per day is 9354.23 steps. The median number
 
 ## What is the average daily activity pattern?
 
+```r
+## Summarize this time on the intervals
+time_table<-summarise(group_by(step,interval),mean(steps,na.rm=TRUE))
+names(time_table)[2]<-"IntervalAvg"
+## Plot steps by interval
+plot(time_table$interval,time_table$IntervalAvg,type="l",xlab="Time Interval",ylab="Steps",main="Average Number of Steps per Time Interval")
+```
 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png) 
+
+```r
+# Find the maximum row 
+max_int_row<-which.max(time_table$IntervalAvg)
+max_avg_steps<-time_table[max_int_row,]$IntervalAvg
+max_avg_interval<-time_table[max_int_row,]$interval
+```
+The maximum time interval occurs at 835 with 206.1698113 steps.
 
 ## Imputing missing values
 
+```r
+## How many NA values? 
+step_na<-sum(is.na(step$steps))
 
+## We will use the median, calculated above, to replace the NA values
+```
+There are 2304 NA values for the variable 'step' in the input file. 
 
 ## Are there differences in activity patterns between weekdays and weekends?

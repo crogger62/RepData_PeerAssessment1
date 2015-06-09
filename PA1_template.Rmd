@@ -9,13 +9,11 @@ output:
 # June 15, 2015
 
 ## Loading and preprocessing the data
-```{r ,echo=FALSE,results="hide",warning=FALSE,message=FALSE}
+```{r ,echo=TRUE,warning=FALSE,message=FALSE}
 library(dplyr)
 library(xtable)
 step<-read.csv("activity.csv")
 ```
-
-
 
 ## What is mean total number of steps taken per day?
 ```{r showtable,results="asis"}
@@ -40,11 +38,30 @@ daily_median<-median(date_table$StepSum)
 The mean total number of steps taken per day is `r daily_mean` steps. The median number of steps is `r daily_median` steps.
 
 ## What is the average daily activity pattern?
+```{r results="asis"}
 
+## Summarize this time on the intervals
+time_table<-summarise(group_by(step,interval),mean(steps,na.rm=TRUE))
+names(time_table)[2]<-"IntervalAvg"
+## Plot steps by interval
+plot(time_table$interval,time_table$IntervalAvg,type="l",xlab="Time Interval",ylab="Steps",main="Average Number of Steps per Time Interval")
 
+# Find the maximum row 
+max_int_row<-which.max(time_table$IntervalAvg)
+max_avg_steps<-time_table[max_int_row,]$IntervalAvg
+max_avg_interval<-time_table[max_int_row,]$interval
+
+```
+The maximum time interval occurs at `r max_avg_interval` with `r max_avg_steps` steps.
 
 ## Imputing missing values
+```{r }
+## How many NA values? 
+step_na<-sum(is.na(step$steps))
 
+## We will use the median, calculated above, to replace the NA values
 
+```
+There are `r step_na` NA values for the variable 'step' in the input file. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
