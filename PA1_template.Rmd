@@ -4,15 +4,40 @@ output:
   html_document:
     keep_md: true
 ---
-
+# Reproducible Research: Peer Assessment 1
+# Craig Lewis
+# June 15, 2015
 
 ## Loading and preprocessing the data
+```{r ,echo=FALSE,results="hide",warning=FALSE,message=FALSE}
+library(dplyr)
+library(xtable)
+step<-read.csv("activity.csv")
+```
 
 
 
 ## What is mean total number of steps taken per day?
+```{r showtable,results="asis"}
+# summarize data & fixup column name
+date_table<-summarise(group_by(step,date),sum(steps,na.rm=TRUE))
+names(date_table)[2]<-"StepSum"
+#output table by day
+dt<-xtable(date_table)
+print ("Number of steps taken each day:")
+print(dt,type="html")
+
+#print histogram
+hist(date_table$StepSum,breaks=30,xlab="Steps",main="Histogram of Steps")
 
 
+#calculate mean & median
+daily_mean <- round(mean(date_table$StepSum),2)
+daily_median<-median(date_table$StepSum)
+
+```
+
+The mean total number of steps taken per day is `r daily_mean` steps. The median number of steps is `r daily_median` steps.
 
 ## What is the average daily activity pattern?
 
