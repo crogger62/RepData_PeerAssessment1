@@ -34,7 +34,7 @@ print(dt,type="html")
 ```
 
 <!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
-<!-- Mon Jun 08 20:59:28 2015 -->
+<!-- Sat Jun 13 11:30:01 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> date </th> <th> StepSum </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> 2012-10-01 </td> <td align="right">   0 </td> </tr>
@@ -102,7 +102,7 @@ print(dt,type="html")
 
 ```r
 #print histogram
-hist(date_table$StepSum,breaks=30,xlab="Steps",main="Histogram of Steps")
+hist(date_table$StepSum,breaks=30,xlab="Steps",main="Histogram of Steps",col="blue")
 ```
 
 ![plot of chunk showtable](figure/showtable-1.png) 
@@ -133,7 +133,7 @@ max_int_row<-which.max(time_table$IntervalAvg)
 max_avg_steps<-time_table[max_int_row,]$IntervalAvg
 max_avg_interval<-time_table[max_int_row,]$interval
 ```
-The maximum time interval occurs at 835 with 206.1698113 steps.
+The maximum interval where the most number of steps occur is  835 with 206.1698113 steps taken.
 
 ## Imputing missing values
 
@@ -141,8 +141,69 @@ The maximum time interval occurs at 835 with 206.1698113 steps.
 ## How many NA values? 
 step_na<-sum(is.na(step$steps))
 
-## We will use the median, calculated above, to replace the NA values
+## Build out new data frame of daily steps replacing NAs with mean value for each day
+## [N.B. There has to be a better way to do this :( )]
+
+#new data structure for values
+interp_date_table<-summarise(group_by(step,date),0)
+names(interp_date_table)[2]<-"mean"
+interp_date_table<-cbind(interp_date_table,rep(0,nrow(date_table)))
+names(interp_date_table)[3]<-"median"
+interp_date_table<-cbind(interp_date_table,rep(0,nrow(date_table)))
+names(interp_date_table)[4]<-"sum"
+
+# go through each day, subset out dates, calculate mean for that day (some are NaNs so we fix those) then assign to 
+# our new data structure
+for (i in 1:nrow(date_table)) {
+    thisday<-date_table[i,]
+    thisdayvalues<-subset(x=step, subset = date==thisday$date)
+    # get the mean and if it is not a number, make it 0
+    thisdaymean<-mean(thisdayvalues$steps,na.rm=TRUE)
+    if(is.nan(thisdaymean)) {thisdaymean<-0}
+    
+    # calculate the median too
+    thisdaymedian<-median(thisdayvalues$steps,na.rm=TRUE)
+    if(is.nan(thisdaymedian)) {thisdaymedian<-0}
+    
+    #assign the mean to the NA vaslues
+    na_val<-is.na(thisdayvalues$steps)
+    thisdayvalues[na_val,1]<-thisdaymean
+    # and add it to the data structure    
+    interp_date_table[i,2]<-mean(thisdayvalues$steps)
+    interp_date_table[i,3]<-median(thisdayvalues$steps)
+    interp_date_table[i,4]<-sum(thisdayvalues$steps)
+    
+    }
 ```
 There are 2304 NA values for the variable 'step' in the input file. 
 
+This is a table of the daily mean and daily median number of steps taken for each day. For the median it appears that because so many of the readings are 0 that the median number of steps is 0.
+
+
+Here is a new histogram of the number of steps taken per day replacing the NA values from the input data set with the mean value of each day in which the NA value appeared. There is no real difference to the shape of the histogram. 
+
+
+
+```r
+hist(interp_date_table$sum,breaks=30,xlab="Steps",main="Histogram of Steps (Revised)",col="blue")
+```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
+
+Looking more closely at the data, there are a number of days where the overwhelming number of measurements are 0. This drives the median down to 0 for all days. Also, the days in which NAs appear, they appear almost always throughout the entire day so that replacing them with the value 0 has the same affect as using the rm.na=TRUE parameter does when summing up the days.
+
+
+
 ## Are there differences in activity patterns between weekdays and weekends?
+
+
+```r
+# Create Factor variable for Day of Week
+
+DoW<-factor(c("Weekend","Weekday"))
+
+
+# Now we know which are weekends and which are weekdays
+```
+
+
