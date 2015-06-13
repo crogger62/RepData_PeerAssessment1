@@ -34,7 +34,7 @@ print(dt,type="html")
 ```
 
 <!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
-<!-- Sat Jun 13 11:30:01 2015 -->
+<!-- Sat Jun 13 13:09:15 2015 -->
 <table border=1>
 <tr> <th>  </th> <th> date </th> <th> StepSum </th>  </tr>
   <tr> <td align="right"> 1 </td> <td> 2012-10-01 </td> <td align="right">   0 </td> </tr>
@@ -152,8 +152,13 @@ names(interp_date_table)[3]<-"median"
 interp_date_table<-cbind(interp_date_table,rep(0,nrow(date_table)))
 names(interp_date_table)[4]<-"sum"
 
+# Create a new step data structure with augmented values
+updated_step<-step
+updated_step<-cbind(updated_step,DoW=rep(0,nrow(updated_step)))
+step_iter<-1
 # go through each day, subset out dates, calculate mean for that day (some are NaNs so we fix those) then assign to 
 # our new data structure
+
 for (i in 1:nrow(date_table)) {
     thisday<-date_table[i,]
     thisdayvalues<-subset(x=step, subset = date==thisday$date)
@@ -173,6 +178,29 @@ for (i in 1:nrow(date_table)) {
     interp_date_table[i,3]<-median(thisdayvalues$steps)
     interp_date_table[i,4]<-sum(thisdayvalues$steps)
     
+    # Apologies - this is a hack; I started this by summarizing by day and then realized we needed 
+    # the original data structure updated    
+
+    # and now we create an updated_step data structure, shaped like the input data except we will 1) add a Day of 
+    # Weekend indicator either Weekend or Weekday and 2) replace NA values with the mean of the day
+    for(j in 1:nrow(thisdayvalues)) {
+        # if it is an NA value update with the mean
+       if (is.na(updated_step$steps[step_iter])) {
+            updated_step$steps[step_iter]<-mean(thisdayvalues$steps)
+           }
+       
+        # And we need to set the Day of Week indicator
+        thisDoW<-weekdays(as.Date.character(updated_step$date[step_iter]))
+        if  (thisDoW %in% c("Saturday","Sunday")) {
+            whichDay<-"Weekend"
+        } else {
+            whichDay<-"Weekday"
+        }
+        
+        updated_step$DoW[step_iter]<-whichDay
+           
+        step_iter<-step_iter + 1
+        }
     }
 ```
 There are 2304 NA values for the variable 'step' in the input file. 
@@ -202,8 +230,21 @@ Looking more closely at the data, there are a number of days where the overwhelm
 
 DoW<-factor(c("Weekend","Weekday"))
 
+# Get  the weekend interval values by subsetting them out and the summarize
+weekend_step<-subset(x=updated_step,subset = DoW=="Weekend")
+weekend_time_table<-summarise(group_by(weekend_step,interval),mean(steps))
 
-# Now we know which are weekends and which are weekdays
+# Get  the weekday interval values by subsetting them out and the summarize
+weekday_step<-subset(x=updated_step,subset = DoW=="Weekday")
+weekday_time_table<-summarise(group_by(weekday_step,interval),mean(steps))
+
+# graph the interval by the number of steps
+par(mfrow=c(2,1))
+plot(weekend_time_table$interval,weekend_time_table$mean,type="l",xlab="Weekend Time Interval",ylab="Steps",main="Weekend Average Number of Steps per Time Interval")
+
+plot(weekday_time_table$interval,weekday_time_table$mean,type="l",xlab="Weekday Time Interval",ylab="Steps",main="Weekday Average Number of Steps per Time Interval")
 ```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
 
 
